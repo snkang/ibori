@@ -1,11 +1,9 @@
+#include "packet.h"
+#include "dbconn.h"
+
 #include <QCoreApplication>
 #include <stdio.h>
 #include <pcap.h>
-
-#include <netinet/in.h>
-#include "libs/config.h"
-#include "libs/libnet-macros.h"
-#include "libs/libnet-headers.h"
 
 #include <boost/regex.hpp>
 #include <iostream>
@@ -17,142 +15,103 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
+    QCoreApplication a(argc, argv);
+
     if (argc != 2 ) {
-        printf("ibory <interface>\n");
-        return(0);
+        printf("ibory <interface>\n");  return(0);
     }
 
     char *dev = argv[1];
     printf("Device: %s\n", dev);
 
-    pcap_t *handle;
-    char errbuf[PCAP_ERRBUF_SIZE];          /* Error string */
-    struct bpf_program fp;                  /* The compiled filter expression */
-    char filter_exp[] = "tcp port 80";      /* The filter expression */
-    bpf_u_int32 mask;                       /* The netmask of our sniffing device */
-    bpf_u_int32 net;                        /* The IP of our sniffing device */
-    struct pcap_pkthdr header;              /* The header that pcap gives us */
-    const u_char *packet;                   /* The actual packet */
-    const int WORD_SIZE = 4;                /* "GET"/"POST" variable size */
-    char str1[WORD_SIZE] = "";              /* "GET"/"POST" variable */
 
-    boost::smatch m;                        /* Matches */
-    boost::regex pat;
-    boost::regex URLs( ".*((?<Protocol>http|ftp|file)\:\/\/(?<Domain>[\\w\@][\\w\.\:\@]+)(\/\?[\\w\\.?=%&-@/$,]*)).*" );  // m[1]
-    boost::regex Cookie( ".*Cookie\: ((\\w+\=[\\w\\d]+)\;\\s([\\w\\d?=%&-@/$,]*)).*" );         // m[1]
-    boost::regex User_ID( ".*\<user_id\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/user_id\>.*" );          // m[1]
-    boost::regex Password( ".*\<password\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/password\>.*" );       // m[1]
+    // ============ 변수 선언 ============
+    pcap_t* handle;
+    timeval ts;
+    const char *filter_exp = "tcp port 80";     /* Filter expression */
+    char* tcp_segment;
+    int packet_type = -1;
+    const uint HTTP_REQUEST = 0;                /* Packet types */
+    const uint FTP = 1;
+    const uint TELNET = 2;
 
-    uint numKeywords = 1;
+    match *mt = new match();
+    match::DATA *data = &mt->data;                                                  // Data
+    const uint DATA_SIZE = 100;
+    match::DATA *dataset = (match::DATA *)malloc(sizeof(match::DATA)*DATA_SIZE);    // Dataset
+    memset(dataset, 0, sizeof(match::DATA)*DATA_SIZE);
 
-    // ----------------  Packet Capture -----------------------
-    handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
-    if (handle == NULL) {
-        fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
-        return(2);
-    }
+    dbconn *dc = new dbconn();
+    uint data_cnt = 0;
+    time_t now_t, last_t = time(0);
 
-    if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
-        return(2);
-    }
+    // ============ 1. Capture TCP packets ============
+    packet *pk = new packet();
+    if (!pk->capturePacket(&handle, dev, filter_exp)) return(2);
 
-    if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
-        return(2);
-    }
-
+    int i_cnt = 0;
     while(true) {
-        /* Grab a packet */
-        packet = pcap_next(handle, &header);
-        if (packet == NULL) continue;
 
-        libnet_ethernet_hdr* eth_hdr = (libnet_ethernet_hdr*) packet;
-        if ( ntohs(eth_hdr->ether_type) != ETHERTYPE_IP /* 0x0800 */ )
-            continue;
+        // ============ 2. Extract TCP segments and Select packets ============
+        if (!pk->getTCPsegment(&tcp_segment, handle, &ts)) continue;
+//        printf("@ handle : %p\s", handle);
 
-        libnet_ipv4_hdr* ip_hdr = (libnet_ipv4_hdr*) ((char*)eth_hdr + 14 /* Ethernet MAC header size */);
-        if ( ip_hdr->ip_p != 6 /* tcp */)
-            continue;
+//        char *text = (char*)malloc(sizeof(char)*20);
+//        dc->getStringDate(ts.tv_sec, text);
+//        printf("TS : %ld, %s\n", ts.tv_sec, text);
 
-        libnet_tcp_hdr* tcp_hdr = (libnet_tcp_hdr*) ((char*)ip_hdr + (ip_hdr->ip_hl * 4));
-        u_int16_t sport = ntohs(tcp_hdr->th_sport);
-        u_int16_t dport = ntohs(tcp_hdr->th_dport);
+//        printf("####tcp_seg : %s\n", tcp_segment);
 
-        /* Print Port number*/
-        //        printf("%u->%u\n", sport, dport);
-
-        /* Print its length */
-        //        printf("Jacked packet length : [%d]", header.len);
-
-        u_int16_t tcp_seg_len = ntohs(ip_hdr->ip_len) - (u_int16_t)(ip_hdr->ip_hl * 4 + tcp_hdr->th_off * 4);
-
-        /* Print tcp segment's length */
-        //        printf("\n IP Header Total length : [%d], Fragmented : [%d]", ntohs(ip_hdr->ip_len), ip_hdr->ip_off);
-        //        printf("\n IP Header length : [%d]", ip_hdr->ip_hl*4);
-        //        printf("\n TCP Header length : [%d]", tcp_hdr->th_off*4);
-        //        printf("\n Tcp segment's length : [%d]\n", tcp_seg_len);
-
-        if (tcp_seg_len <= 0) {
-            continue;               /* No TCP segments  */
-        }
-
-        char* tcp_segment = (char*)((char*)tcp_hdr + tcp_hdr->th_off * 4);
-
-        /* Print TCP segment */
-        //            printf("%s\n", tcp_segment);
-
-
-        /* Filter Http request packets only. */
-        strncpy ( str1, tcp_segment, sizeof(char)*3 );
-        //            cout << "* str1 : " << str1 << endl;
-
-        if ( strcmp(str1, "GET")*strcmp(str1, "POS") != 0 ) {
-//            cout << "GET/POST not matched!!" << endl;
+        if (!pk->filterPacket(&packet_type, tcp_segment, HTTP_REQUEST) &&
+            !pk->filterPacket(&packet_type, tcp_segment, FTP) &&
+            !pk->filterPacket(&packet_type, tcp_segment, TELNET)) {
             continue;
         }
-        cout << "HTTP request (GET/POST) packet!!" << endl;
 
 
-        /* Find search Keywords */
-        string buffer = string(tcp_segment);
+        // ============ 3. Find matches of keywords from the segments ============
+        memset(data, 0, sizeof(match::DATA));
+        if (!mt->searchKeyword(&packet_type, tcp_segment, &data, ts)) continue;
 
-        /* Search URL */
-        pat = URLs;
-        if (boost::regex_match(buffer, m, pat)) {
-           cout << "# URL : " << m[1] << endl;
+        // ============ 4. Filter data out does not meet requirements ===============
+        if ( data->url.empty() ||
+             ( data->id.empty() && data->password.empty() && data->cookie.empty() )
+           ) {
+            continue;
         }
 
-        /* Search Cookie */
-        pat = Cookie;
-        if (boost::regex_match(buffer, m, pat)) {
-            cout << "# Cookie : " << m[1] << endl;
+        if ( data_cnt == 10 ) {
+            for (int i=0; i<10; i++) {
+                printf("\n[%d] url : %s\n", i, dataset[i].url.c_str());
+                printf("[%d] id : %s\n", i, dataset[i].id.c_str());
+                printf("[%d] passwd : %s\n", i, dataset[i].password.c_str());
+                printf("[%d] cookie : %s\n", i, dataset[i].cookie.c_str());
+                printf("[%d] date : %d\n", i, dataset[i].cdate);
+            }
         }
 
-        /* Search USER_ID */
-        pat = User_ID;
-        if (boost::regex_match(buffer, m, pat)) {
-            cout << "# User_ID : " << m[1] << endl;
+        // ============ 5. Insert dataset to DB (every 10sec or 100 dataset is ready) ============
+        now_t = time(0);
+        printf("\n* data_cnt : %d, now_t - last_t : %ld \n", data_cnt, now_t - last_t);
+        if ( data_cnt < 10 && now_t - last_t < 60 ) {
+            memcpy(&dataset[data_cnt++], data, sizeof(match::DATA));
+            continue;
         }
 
-        /* Search PASSWORD */
-        pat = Password;
-        if (boost::regex_match(buffer, m, pat)) {
-            cout << "# Password : " << m[1] << endl;
-        }
+        dc->insertData2DB(dataset, data_cnt);
 
-        /* Get Date(ISO format) */
-        time_t secs=time(0);
-        tm *t=localtime(&secs);
-        cout << "# Date : " << t->tm_year+1900 << "-" << t->tm_mon+1 << "-" << t->tm_mday << " " <<
-                t->tm_hour << ":" << t->tm_min << ":" << t->tm_sec << endl;
+        data_cnt = 0;
+        last_t = now_t;
+        memset(dataset, 0, sizeof(match::DATA)*DATA_SIZE);  // Empty dataset.
+
+        printf("\n\n============= Iteration count : [%d] ================\n\n", ++i_cnt);
     }
 
     /* And close the session */
     pcap_close(handle);
 
-    QCoreApplication a(argc, argv);
-    return a.exec();
+    delete mt, dc, pk;
 
+    return a.exec();
     return(0);
 }
