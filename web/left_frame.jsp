@@ -5,6 +5,10 @@
 <head>
 <title>top_frame</title>
 <meta http-equiv="Content-Type" content="text/html; charset=euc-kr">
+<style type="text/css">
+body {	background-color: #FFFFCC; }
+td,th { color: #000000; }
+</style>
 </head>
 
 <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
