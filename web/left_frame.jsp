@@ -34,7 +34,7 @@
 
 		<form action="top_frame.jsp" method="post" id="form1" target="topFrame">
 		<tr>
-			<td height="80" width="300">
+			<td height="70" width="300">
 				<b>&nbsp;* Type : <br>&nbsp;
 			    <input type="radio" name="type" value="id_pw" checked="checked">ID/PASSWD
 				<input type="radio" name="type" value="cookie">Cookies
@@ -42,7 +42,7 @@
 			</td>
 		</tr>
 		<tr>
-			<td height="80" width="270">
+			<td height="90" width="270">
 				<div align="left">
 					<font color="Black"> <b>* URL : <br>&nbsp;
 							<select	name="s_url" style="width: 250px">
@@ -82,7 +82,7 @@ try {
 				<div align="left">
 					<b>* Date : <br>&nbsp;
 					<input type="text" name="sdate" id="datepicker1" size="11" value="20161101">&nbsp;~&nbsp;</b>
-					<input type="text" name="edate" id="datepicker2" size="11" value="20161201">&nbsp;<br><br>&nbsp;
+					<input type="text" name="edate" id="datepicker2" size="11" value="20161207">&nbsp;<br><br>&nbsp;
 					<button type="submit" form="form1" value="Submit">Search</button>
 				</div>
 			</td>

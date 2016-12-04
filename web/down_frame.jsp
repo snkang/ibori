@@ -15,10 +15,13 @@
 			</tr>
 
 			<tr align="center">
-				<td>APISID</td>
-				<td align="left">Aq5OWgn5gIUUB5wXT</td>
+				<td>PHPSESSID</td>
+				<td align="left">99d8c68c79737ea70f3807f33a604832</td>
 			</tr>
-
+			<tr align="center">
+				<td>sso</td>
+				<td align="left">b2376caddca77ededbf960854d5826b3</td>
+			</tr>
 		</table>
 	</font>
 </body>

