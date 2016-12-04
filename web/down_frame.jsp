@@ -29,12 +29,27 @@
 <style type="text/css">
 body {	background-color: #FFFFCC; }
 td,th { color: #000000; }
+textarea {
+   background-color: #FAFAFA;
+   color: #333333;
+   font-family: "Lucida Grande", Verdana, Helvetica, Arial, sans-serif;
+   font-size: 1.3em; 
+   line-height: 0.9em;
+   font-weight: normal;
+   border: 1px solid #A9B8C2;
+   padding: 2px;
+}
+/* ff,crome,safari */ 
+textarea:focus  { background-color: #BFFFFF; }
+
+/* IE */
+textarea.focusie { background-color: #BFFFFF; }
 </style>
 </head>
 
 <body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0">
 
-<textarea style="height: 100%; width: 100%; font-size: 14px; padding: 12px 20px; margin: 8px 0; box-sizing: border-box; border: 1px solid #555; outline: none; :focue background-color: lightblue;" >
+<textarea style="height: 100%; width: 100%; font-size: 14px; padding: 12px 20px; margin: 8px 0; box-sizing: border-box; border: 1px solid #555; outline: none;" onfocus="background-color: lightblue">
 -----------------<Headers>-----------------
 <%
 Enumeration headerNames = request.getHeaderNames();

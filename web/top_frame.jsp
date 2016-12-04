@@ -12,15 +12,10 @@
 %>
 
 <script type="text/javascript">
-function myEnterFunction() {
-	eval(parent.downFrame.location='down_frame.jsp');
-    document.getElementById("demo2").innerHTML = x+=1;
-}
-</script>
-<script type="text/javascript">
-    function showCookie() {
-       eval(parent.downFrame.location='down_frame.jsp');
-    }
+	function myEnterFunction() {
+		
+		eval(parent.downFrame.location='down_frame.jsp');
+	}
 </script>
 
 
@@ -77,7 +72,7 @@ String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 				url = rs.getString("url");
 				cookie = rs.getString("cookie");
 %>
-				<tr align="center" onmouseenter="myEnterFunction(); bgcolor='#b0cdfc';" onmouseout="bgcolor='#ffffff'" height="35px">
+				<tr align="center" onmouseenter="background-color:lightblue" height="35px">
 					<td><%= ++cnt %></td>
 					<form action="down_frame.jsp" target="downFrame">
 					<td align="left" style="max-width:150px; word-wrap: break-word;"><a href="<%= url %>"><%= url %></td>
@@ -117,7 +112,7 @@ String sql2 = "select distinct url, id, passwd, cdate from ibory.getpasswd";
 			while(rs.next()) { 
 				url = rs.getString("url");
 %>
-				<tr align="center" height="35px">
+				<tr align="center" onmouseenter="background-color:lightblue" height="35px">
 					<td><%= ++cnt %></td>
 					<td align="left"><a href="<%= url %>"><%= url %></a></td>
 					<td><%= rs.getString("id") %></td>
