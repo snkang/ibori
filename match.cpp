@@ -3,12 +3,12 @@
 #include <boost/regex.hpp>
 
 // On/Off Switch For Dubugging
-#define _PRINT_Debug 0
+#define _Debug 0
 
 // ======================= 전역 변수 =========================
 boost::smatch m;                        /* Matches */
-boost::regex URL( ".*((?<Protocol>http|ftp|file)\:\/\/(?<Domain>[\\w\@][\\w\.\:\@]+)(\/\?[\\w\\.?=%&-@/$,]*)).*" );  // m[1]
-boost::regex Cookie( ".*Cookie\: ((\\w+\=[\\w\\d]+)\;\\s([\\w\\d?=%&-@/$,]*)).*" );         // m[1]
+boost::regex URL( ".*Host\: ([^\\r]*).*" );                                                 // m[1]
+boost::regex Cookie( ".*Cookie\: ([^\\r]*).*" );                                            // m[1]
 boost::regex User_ID( ".*\<user_id\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/user_id\>.*" );          // m[1]
 boost::regex Password( ".*\<password\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/password\>.*" );       // m[1]
 
@@ -35,7 +35,7 @@ bool match::searchKeyword(int *packet_type, char* tcp_segment, DATA **data, time
     case HTTP_REQUEST :
         if (boost::regex_match(text, m, URL)) {
             (*data)->url = m[1];
-#if _PRINT_Debug
+#if _Debug
             printf("# URL : %s\n", (*data)->url.c_str());
 #endif
             result = true;
@@ -43,7 +43,7 @@ bool match::searchKeyword(int *packet_type, char* tcp_segment, DATA **data, time
 
         if (boost::regex_match(text, m, Cookie)) {
             (*data)->cookie = m[1];
-#if _PRINT_Debug
+#if _Debug
             printf("# Cookie : %s\n", (*data)->cookie.c_str());
 #endif
             result = true;
@@ -51,7 +51,7 @@ bool match::searchKeyword(int *packet_type, char* tcp_segment, DATA **data, time
 
         if (boost::regex_match(text, m, User_ID)) {
             (*data)->id = m[1];
-#if _PRINT_Debug
+#if _Debug
             printf("# User_ID : %s\n", (*data)->id.c_str());
 #endif
             result = true;
@@ -59,7 +59,7 @@ bool match::searchKeyword(int *packet_type, char* tcp_segment, DATA **data, time
 
         if (boost::regex_match(text, m, Password)) {
             (*data)->password = m[1];
-#if _PRINT_Debug
+#if _Debug
             printf("# Password : %s\n", (*data)->password .c_str());
 #endif
             result = true;

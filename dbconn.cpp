@@ -1,13 +1,8 @@
 /* Standard C++ includes */
-#include <stdlib.h>
 #include <iostream>
+#include <stdlib.h>
 #include <string.h>
 
-/*
-  Include directly the different
-  headers from cppconn/ and mysql_driver.h + mysql_util.h
-  (and mysql_connection.h). This will reduce your build time!
-*/
 #include "mysql_connection.h"
 #include "dbconn.h"
 
@@ -17,14 +12,11 @@
 #include <cppconn/statement.h>
 #include <cppconn/prepared_statement.h>
 
+#define Debug 0
+
 using namespace std;
 
-// =================== Private variables ====================
-int idpw_cnt = 0, ck_cnt = 0;
-int sn, cn;
-
 dbconn::dbconn(){}
-
 dbconn::~dbconn(){}
 
 
@@ -42,49 +34,59 @@ bool dbconn::insertData2DB(match::DATA *dataset, uint data_cnt) {
         /* Connect to the MySQL ibory database */
         con->setSchema("ibory");
 
-
-        pstmt1 = con->prepareStatement("INSERT INTO ibory.getpasswd (sn, url, id, passwd, cdate) VALUES (?, ?, ?, ?, ?)");
+        pstmt1 = con->prepareStatement("INSERT INTO ibory.getpasswd (url, id, passwd, cdate) VALUES (?, ?, ?, ?)");
 
         for (int i=0; i<data_cnt; i++) {
 
+#if Debug
             printf("\n dataset[%d].url : %s, empty() : %d", i, dataset[i].url.c_str(), dataset[i].url.empty());
             printf("\n dataset[%d].id : %s, empty() : %d", i, dataset[i].id.c_str(), dataset[i].id.empty());
             printf("\n dataset[%d].password : %s, empty() : %d\n", i, dataset[i].password.c_str(), dataset[i].password.empty());
+#endif
 
             if ( dataset[i].url.empty() || dataset[i].id.empty() || dataset[i].password.empty() ) continue;
 
-            pstmt1->setInt(1, dataset[i].cdate);        // sn
-            pstmt1->setString(2, dataset[i].url);       // url
-            pstmt1->setString(3, dataset[i].id);        // id
-            pstmt1->setString(4, dataset[i].password);  // passwd
+                pstmt1->setString(1, dataset[i].url);       // url
+                pstmt1->setString(2, dataset[i].id);        // id
+                pstmt1->setString(3, dataset[i].password);  // passwd
 
             if ( dataset[i].cdate != 0 ) {
                 char *text = (char*)malloc(sizeof(char)*20);
                 getStringDate(dataset[i].cdate, text);
-                pstmt1->setDateTime(5, text);           // date
+                pstmt1->setDateTime(4, text);           // date
             } else {
-                pstmt1->setDateTime(5, "");
+                char *text = (char*)malloc(sizeof(char)*20);
+                timeval tv;
+                getStringDate(tv.tv_sec, text);
+                pstmt1->setDateTime(4, text);
             }
             pstmt1->executeUpdate();
         }
 
 
-        pstmt2 = con->prepareStatement("INSERT INTO ibory.getcookie (cn, url, cookie, cdate) VALUES (?, ?, ?, ?)");
+        pstmt2 = con->prepareStatement("INSERT INTO ibory.getcookie (url, cookie, cdate) VALUES (?, ?, ?)");
 
         for (int i=0; i<data_cnt; i++) {
 
+#if Debug
+            printf("\n dataset[%d].url : %s, empty() : %d", i, dataset[i].url.c_str(), dataset[i].url.empty());
+            printf("\n dataset[%d].cookie : %s, empty() : %d", i, dataset[i].cookie.c_str(), dataset[i].cookie.empty());
+#endif
+
             if ( dataset[i].url.empty() || dataset[i].cookie.empty() ) continue;
 
-            pstmt2->setInt(1, dataset[i].cdate);      // cn
-            pstmt2->setString(2, dataset[i].url);     // url
-            pstmt2->setString(3, dataset[i].cookie);  // cookie
+            pstmt2->setString(1, dataset[i].url);     // url
+            pstmt2->setString(2, dataset[i].cookie);  // cookie
 
             if ( dataset[i].cdate != 0 ) {
                 char *text = (char*)malloc(sizeof(char)*20);
                 getStringDate(dataset[i].cdate, text);
-                pstmt2->setDateTime(4, text);        // date
+                pstmt2->setDateTime(3, text);        // date
             } else {
-                pstmt2->setDateTime(4, "");
+                char *text = (char*)malloc(sizeof(char)*20);
+                timeval tv;
+                getStringDate(tv.tv_sec, text);
+                pstmt2->setDateTime(3, text);
             }
             pstmt2->executeUpdate();
         }
@@ -100,7 +102,6 @@ bool dbconn::insertData2DB(match::DATA *dataset, uint data_cnt) {
 
 void dbconn::getStringDate(time_t cdate, char* text) {
     strftime(text, 20, "%Y-%m-%d %H:%M:%S", localtime(&cdate));
-//    printf("Date : %s\n", text);
 }
 
 int dbconn::genSerialNumber(int *num_cnt, int *data_cnt, time_t cdate) {
@@ -127,5 +128,3 @@ int dbconn::genSerialNumber(int *num_cnt, int *data_cnt, time_t cdate) {
 
     return atoi(num);
 }
-
-

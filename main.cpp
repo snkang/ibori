@@ -11,6 +11,8 @@
 #include <string.h>
 #include <time.h>
 
+#define Debug 0
+
 using namespace std;
 
 int main(int argc, char *argv[])
@@ -37,7 +39,7 @@ int main(int argc, char *argv[])
 
     match *mt = new match();
     match::DATA *data = &mt->data;                                                  // Data
-    const uint DATA_SIZE = 100;
+    const uint DATA_SIZE = 1000;
     match::DATA *dataset = (match::DATA *)malloc(sizeof(match::DATA)*DATA_SIZE);    // Dataset
     memset(dataset, 0, sizeof(match::DATA)*DATA_SIZE);
 
@@ -54,20 +56,12 @@ int main(int argc, char *argv[])
 
         // ============ 2. Extract TCP segments and Select packets ============
         if (!pk->getTCPsegment(&tcp_segment, handle, &ts)) continue;
-//        printf("@ handle : %p\s", handle);
-
-//        char *text = (char*)malloc(sizeof(char)*20);
-//        dc->getStringDate(ts.tv_sec, text);
-//        printf("TS : %ld, %s\n", ts.tv_sec, text);
-
-//        printf("####tcp_seg : %s\n", tcp_segment);
 
         if (!pk->filterPacket(&packet_type, tcp_segment, HTTP_REQUEST) &&
             !pk->filterPacket(&packet_type, tcp_segment, FTP) &&
             !pk->filterPacket(&packet_type, tcp_segment, TELNET)) {
             continue;
         }
-
 
         // ============ 3. Find matches of keywords from the segments ============
         memset(data, 0, sizeof(match::DATA));
@@ -80,6 +74,7 @@ int main(int argc, char *argv[])
             continue;
         }
 
+#if _Debug
         if ( data_cnt == 10 ) {
             for (int i=0; i<10; i++) {
                 printf("\n[%d] url : %s\n", i, dataset[i].url.c_str());
@@ -89,11 +84,11 @@ int main(int argc, char *argv[])
                 printf("[%d] date : %d\n", i, dataset[i].cdate);
             }
         }
+#endif
 
         // ============ 5. Insert dataset to DB (every 10sec or 100 dataset is ready) ============
         now_t = time(0);
-        printf("\n* data_cnt : %d, now_t - last_t : %ld \n", data_cnt, now_t - last_t);
-        if ( data_cnt < 10 && now_t - last_t < 60 ) {
+        if ( data_cnt < 5 && now_t - last_t < 10 ) {
             memcpy(&dataset[data_cnt++], data, sizeof(match::DATA));
             continue;
         }
@@ -103,8 +98,6 @@ int main(int argc, char *argv[])
         data_cnt = 0;
         last_t = now_t;
         memset(dataset, 0, sizeof(match::DATA)*DATA_SIZE);  // Empty dataset.
-
-        printf("\n\n============= Iteration count : [%d] ================\n\n", ++i_cnt);
     }
 
     /* And close the session */
