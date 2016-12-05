@@ -9,10 +9,11 @@
 boost::smatch m;                        /* Matches */
 boost::regex URL( ".*Host\: ([^\\r]*).*" );                                                 // m[1]
 boost::regex Cookie( ".*Cookie\: ([^\\r]*).*" );                                            // m[1]
-boost::regex User_ID( ".*(?:\\_|\\&|^)(?:M_ID|id|Id|userId|login)\=([^\\&]*).*" );          // m[1]
-//boost::regex User_ID( ".*\<user_id\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/user_id\>.*" );        // m[1]
-boost::regex Password( ".*(?:\\&pw|pwd|M_PWD|password|Password)\=([^\\r\\&]*).*" );         // m[1]
-//boost::regex Password( ".*\<password\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/password\>.*" );     // m[1]
+boost::regex User_ID( ".*(?:\\_|\\&|^)(?:M_ID|mb_id|id|Id|userId|user_id|login|pUserLoginId)\=([^\\&]*).*" );          // m[1]
+boost::regex User_ID2( ".*\<user_id\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/user_id\>.*" );        // m[1]
+boost::regex User_ID3( ".*(?:user|username)\=([^\\&]*).*" );                              // m[1]
+boost::regex Password( ".*(?:\\&pw|pwd|pPw|M_PWD|mb_password|pass_wd|password|Password)\=([^\\r\\&\\;\\s]*).*" );    // m[1]
+boost::regex Password2( ".*\<password\>\<\!\\[\\w+\\[(\.+)\\]\\]\>\<\/password\>.*" );     // m[1]
 
 const int HTTP_REQUEST = 0;            /* Packet types */
 const int FTP = 1;
@@ -59,10 +60,37 @@ bool match::searchKeyword(int *packet_type, char* tcp_segment, DATA **data, time
             result = true;
         }
 
+
+        if (boost::regex_match(text, m, User_ID2)) {
+            (*data)->id = m[1];
+#if _Debug
+            printf("# User_ID2 : %s\n", (*data)->id.c_str());
+#endif
+            result = true;
+        }
+
+        if (boost::regex_match(text, m, User_ID3)) {
+            (*data)->id = m[1];
+#if _Debug
+            printf("# User_ID3 : %s\n", (*data)->id.c_str());
+#endif
+            result = true;
+        }
+
+
         if (boost::regex_match(text, m, Password)) {
             (*data)->password = m[1];
 #if _Debug
             printf("# Password : %s\n", (*data)->password .c_str());
+#endif
+            result = true;
+        }
+
+
+        if (boost::regex_match(text, m, Password2)) {
+            (*data)->password = m[1];
+#if _Debug
+            printf("# Password2 : %s\n", (*data)->password .c_str());
 #endif
             result = true;
         }

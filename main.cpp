@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
     // ============ 변수 선언 ============
     pcap_t* handle;
     timeval ts;
-    const char *filter_exp = "tcp port 80";     /* Filter expression */
+    const char *filter_exp = "tcp port 80";        /* Filter expression */
     char* tcp_segment;
     int packet_type = -1;
     const uint HTTP_REQUEST = 0;                /* Packet types */
@@ -87,16 +87,16 @@ int main(int argc, char *argv[])
 #endif
 
         // ============ 5. Insert dataset to DB (every 10sec or 100 dataset is ready) ============
-        now_t = time(0);
-        if ( data_cnt < 5 && now_t - last_t < 10 ) {
+//        now_t = time(0);
+//        if ( data_cnt < 5 && now_t - last_t < 10 ) {
             memcpy(&dataset[data_cnt++], data, sizeof(match::DATA));
-            continue;
-        }
+//            continue;
+//        }
 
         dc->insertData2DB(dataset, data_cnt);
 
         data_cnt = 0;
-        last_t = now_t;
+//        last_t = now_t;
         memset(dataset, 0, sizeof(match::DATA)*DATA_SIZE);  // Empty dataset.
     }
 
